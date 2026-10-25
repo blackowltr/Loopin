@@ -66,14 +66,8 @@ public struct SettingsView: View {
                 Spacer()
                 
                 if !vm.accessibility.isGranted {
-                    HStack(spacing: 8) {
-                        MacSecondaryButton(title: "İzin İste", systemImage: "hand.raised.fill") {
-                            vm.accessibility.requestPermission()
-                        }
-                        
-                        MacSecondaryButton(title: "Ayarları Aç", systemImage: "arrow.up.forward.app") {
-                            vm.accessibility.openAccessibilitySettings()
-                        }
+                    MacHeroButton(title: "Ayarları Aç ve İzin Ver", systemImage: "arrow.up.forward.app", width: 190, height: 32) {
+                        vm.accessibility.requestAndOpenSettings()
                     }
                 }
             }

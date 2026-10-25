@@ -108,8 +108,7 @@ public final class AppViewModel: ObservableObject {
             showToast("Oto Tıklayıcı durduruldu")
         } else {
             guard accessibility.isGranted else {
-                accessibility.requestPermission()
-                showToast("Erişilebilirlik izni gerekli!")
+                showToast("Erişilebilirlik izni gereklidir")
                 return
             }
             clicker.start(config: autoClickerConfig) { [weak self] in
@@ -127,8 +126,7 @@ public final class AppViewModel: ObservableObject {
             showToast("Kayıt tamamlandı: \(events.count) adım")
         } else {
             guard accessibility.isGranted else {
-                accessibility.requestPermission()
-                showToast("Erişilebilirlik izni gerekli!")
+                showToast("Erişilebilirlik izni gereklidir")
                 return
             }
             recorder.startRecording()
@@ -143,8 +141,7 @@ public final class AppViewModel: ObservableObject {
             showToast("Makro oynatımı durduruldu")
         } else {
             guard accessibility.isGranted else {
-                accessibility.requestPermission()
-                showToast("Erişilebilirlik izni gerekli!")
+                showToast("Erişilebilirlik izni gereklidir")
                 return
             }
             guard !currentSequence.events.isEmpty else {
