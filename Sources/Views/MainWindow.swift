@@ -60,7 +60,7 @@ public struct MainWindow: View {
             .background(Color(NSColor.windowBackgroundColor))
             
             // First-launch One-Time Accessibility Permission Modal
-            if !vm.accessibility.isGranted {
+            if !vm.accessibility.isGranted && !vm.accessibility.hasUserBypassedOnboarding {
                 accessibilityOnboardingOverlay
                     .transition(.opacity.combined(with: .scale(scale: 0.98)))
             }
@@ -71,7 +71,7 @@ public struct MainWindow: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.98)))
             }
         }
-        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: vm.accessibility.isGranted)
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: vm.accessibility.isGranted || vm.accessibility.hasUserBypassedOnboarding)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: vm.updateManager.showUpdateModal)
         .toolbar {
             // Left: App Branding Pill (Fixed width 130 for bilateral balance)
@@ -253,7 +253,7 @@ public struct MainWindow: View {
                     HStack(spacing: 8) {
                         Image(systemName: "gearshape.fill")
                             .font(.system(size: 13, weight: .semibold))
-                        Text("Sistem Ayarlarını Aç ve İzin Ver")
+                        Text("1. Sistem Ayarlarını Aç ve İzin Ver")
                             .font(.system(size: 13, weight: .semibold))
                     }
                     .foregroundColor(.white)
@@ -271,12 +271,79 @@ public struct MainWindow: View {
                 }
                 .buttonStyle(.plain)
                 
-                // Real-time Detection Status
+                // Secondary Action Row (If user already granted in System Settings)
+                HStack(spacing: 10) {
+                    Button(action: {
+                        vm.accessibility.relaunchApp()
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 11, weight: .bold))
+                            Text("Yeniden Başlat (Önerilen)")
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 32)
+                        .background(Color.primary.opacity(0.06))
+                        .foregroundColor(.primary)
+                        .cornerRadius(7)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Button(action: {
+                        vm.accessibility.bypassOnboarding()
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 11, weight: .bold))
+                            Text("İzni Verdim, Giriş Yap")
+                                .font(.system(size: 12, weight: .bold))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 32)
+                        .background(Color.green.opacity(0.15))
+                        .foregroundColor(.green)
+                        .cornerRadius(7)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+                
+                // Helpful Hint Box
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "info.circle.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(.blue)
+                        .padding(.top, 1)
+                    
+                    Text("Sistem Ayarlarında Loopin'i açtıysanız ancak ekran otomatik kapanmadıysa; macOS'in izni uygulamaya aktarması için 'Yeniden Başlat'a basın veya doğrudan 'İzni Verdim, Giriş Yap' butonuna tıklayın.")
+                        .font(.system(size: 10.5))
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color.blue.opacity(0.05))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .stroke(Color.blue.opacity(0.12), lineWidth: 1)
+                        )
+                )
+                
+                // Real-time Detection Status & Dismiss
                 HStack(spacing: 8) {
                     ProgressView()
                         .controlSize(.small)
                     
-                    Text("Sistem Ayarlarından izin onayı bekleniyor...")
+                    Text("İzin durumu denetleniyor...")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.secondary)
                     
@@ -287,6 +354,17 @@ public struct MainWindow: View {
                     }
                     .font(.system(size: 11, weight: .medium))
                     .buttonStyle(.link)
+                    
+                    Text("•")
+                        .font(.caption)
+                        .foregroundColor(.secondary.opacity(0.5))
+                    
+                    Button("Şimdilik Atla") {
+                        vm.accessibility.bypassOnboarding()
+                    }
+                    .font(.system(size: 11, weight: .medium))
+                    .buttonStyle(.link)
+                    .foregroundColor(.secondary)
                 }
                 .padding(.horizontal, 4)
             }

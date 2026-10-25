@@ -61,8 +61,8 @@ swiftc \
     "${SWIFT_SOURCES[@]}" \
     -o "$MACOS_DIR/$APP_NAME"
 
-echo "🔐 Ad-hoc kod imzası uygulanıyor (macOS TCC izinleri için)..."
-codesign --force --deep --sign - "$APP_BUNDLE"
+echo "🔐 Sabit Tanımlayıcılı Kod İmzası Uygulanıyor (macOS TCC İzinlerinin Korunması İçin)..."
+codesign --force --deep -s - -r='designated => identifier "com.blackowl.Loopin"' "$APP_BUNDLE"
 
 echo "✅ Derleme başarılı: $APP_BUNDLE"
 echo "🚀 Loopin'i çalıştırmak için: open \"$APP_BUNDLE\""

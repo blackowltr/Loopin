@@ -8,12 +8,15 @@ public final class AccessibilityManager: ObservableObject {
     
     @Published public private(set) var isGranted: Bool = false
     @Published public var hasPromptedOnce: Bool = false
+    @Published public var hasUserBypassedOnboarding: Bool = false
     
     private var checkTimer: Timer?
     private let promptedKey = "com.blackowl.loopin.hasPromptedAccessibility"
+    private let bypassedKey = "com.blackowl.loopin.hasUserBypassedOnboarding"
     
     public init() {
         self.hasPromptedOnce = UserDefaults.standard.bool(forKey: promptedKey)
+        self.hasUserBypassedOnboarding = UserDefaults.standard.bool(forKey: bypassedKey)
         checkStatus()
         startPeriodicCheck()
     }
@@ -24,7 +27,15 @@ public final class AccessibilityManager: ObservableObject {
     
     @discardableResult
     public func checkStatus() -> Bool {
-        let trusted = AXIsProcessTrusted()
+        // 1. Check with options dictionary (uncached in modern macOS)
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: false] as CFDictionary
+        var trusted = AXIsProcessTrustedWithOptions(options)
+        
+        // 2. Secondary check
+        if !trusted {
+            trusted = AXIsProcessTrusted()
+        }
+        
         if isGranted != trusted {
             isGranted = trusted
             if trusted {
@@ -71,6 +82,26 @@ public final class AccessibilityManager: ObservableObject {
         checkTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.checkStatus()
+            }
+        }
+    }
+    
+    /// Allows the user to bypass the onboarding overlay and enter the app directly.
+    public func bypassOnboarding() {
+        hasUserBypassedOnboarding = true
+        UserDefaults.standard.set(true, forKey: bypassedKey)
+        checkStatus()
+    }
+    
+    /// macOS TCC requires processes to be restarted when their accessibility permission is toggled from OFF to ON while running.
+    public func relaunchApp() {
+        let bundleUrl = Bundle.main.bundleURL
+        let config = NSWorkspace.OpenConfiguration()
+        NSWorkspace.shared.openApplication(at: bundleUrl, configuration: config) { _, error in
+            if error == nil {
+                DispatchQueue.main.async {
+                    NSApp.terminate(nil)
+                }
             }
         }
     }

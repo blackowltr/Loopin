@@ -108,7 +108,7 @@ public final class AppViewModel: ObservableObject {
             clicker.stop()
             showToast("Oto Tıklayıcı durduruldu")
         } else {
-            guard accessibility.isGranted else {
+            guard accessibility.isGranted || accessibility.hasUserBypassedOnboarding else {
                 showToast("Erişilebilirlik izni gereklidir")
                 return
             }
@@ -126,7 +126,7 @@ public final class AppViewModel: ObservableObject {
             currentSequence.events = events
             showToast("Kayıt tamamlandı: \(events.count) adım")
         } else {
-            guard accessibility.isGranted else {
+            guard accessibility.isGranted || accessibility.hasUserBypassedOnboarding else {
                 showToast("Erişilebilirlik izni gereklidir")
                 return
             }
@@ -141,7 +141,7 @@ public final class AppViewModel: ObservableObject {
             player.stop()
             showToast("Makro oynatımı durduruldu")
         } else {
-            guard accessibility.isGranted else {
+            guard accessibility.isGranted || accessibility.hasUserBypassedOnboarding else {
                 showToast("Erişilebilirlik izni gereklidir")
                 return
             }
