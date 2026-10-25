@@ -64,8 +64,15 @@ public struct MainWindow: View {
                 accessibilityOnboardingOverlay
                     .transition(.opacity.combined(with: .scale(scale: 0.98)))
             }
+            
+            // Background Auto-Update Notification Dialog
+            if vm.updateManager.showUpdateModal {
+                updatePromptOverlay
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: vm.accessibility.isGranted)
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: vm.updateManager.showUpdateModal)
         .toolbar {
             // Left: App Branding Pill (Fixed width 130 for bilateral balance)
             ToolbarItem(placement: .navigation) {
@@ -320,6 +327,180 @@ public struct MainWindow: View {
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+        }
+    }
+    
+    // MARK: - Software Update Prompt Overlay
+    private var updatePromptOverlay: some View {
+        ZStack {
+            // Frosted backdrop
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    vm.updateManager.dismissUpdate(remindLater: true)
+                }
+            
+            // Modal Card
+            VStack(spacing: 18) {
+                // Header Icon
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.blue.opacity(0.2), Color.cyan.opacity(0.1)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 68, height: 68)
+                    
+                    IconBadge(
+                        systemName: "arrow.triangle.2.circlepath",
+                        colors: [Color.blue, Color.cyan],
+                        size: 46,
+                        iconSize: 22
+                    )
+                }
+                
+                // Title & Subtitle
+                VStack(spacing: 6) {
+                    Text("Yeni Güncelleme Mevcut")
+                        .font(.system(size: 19, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                    
+                    Text("Loopin \(vm.updateManager.latestVersion) yayınlandı")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                
+                // Version comparison pill
+                HStack(spacing: 12) {
+                    VStack(alignment: .center, spacing: 2) {
+                        Text("Mevcut Sürüm")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.secondary)
+                        Text("v\(vm.updateManager.currentVersion)")
+                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                            .foregroundColor(.primary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(Color.primary.opacity(0.04))
+                    .cornerRadius(8)
+                    
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.secondary)
+                    
+                    VStack(alignment: .center, spacing: 2) {
+                        Text("Yeni Sürüm")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.blue)
+                        Text(vm.updateManager.latestVersion)
+                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                            .foregroundColor(.blue)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(8)
+                }
+                
+                // Release notes excerpt
+                if !vm.updateManager.releaseNotes.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Yenilikler & Notlar:")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.secondary)
+                        
+                        ScrollView {
+                            Text(vm.updateManager.releaseNotes)
+                                .font(.system(size: 11))
+                                .foregroundColor(.primary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(10)
+                        }
+                        .frame(maxHeight: 120)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color(NSColor.controlBackgroundColor))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                                )
+                        )
+                    }
+                }
+                
+                // Download Progress (if downloading)
+                if vm.updateManager.isDownloading {
+                    VStack(spacing: 6) {
+                        ProgressView()
+                            .controlSize(.regular)
+                        Text("Güncelleme paketi indiriliyor...")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                }
+                
+                // Action Buttons
+                VStack(spacing: 8) {
+                    Button(action: {
+                        vm.updateManager.downloadAndOpenDMG()
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.system(size: 13, weight: .semibold))
+                            Text(vm.updateManager.isDownloading ? "İndiriliyor..." : "Şimdi Güncelle ve Aç")
+                                .font(.system(size: 13, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 38)
+                        .background(
+                            LinearGradient(
+                                colors: [Color.blue, Color(red: 0.05, green: 0.45, blue: 0.95)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .cornerRadius(8)
+                        .shadow(color: Color.blue.opacity(0.35), radius: 6, y: 3)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(vm.updateManager.isDownloading)
+                    
+                    HStack(spacing: 12) {
+                        Button("Tarayıcıda İncele") {
+                            vm.updateManager.openReleasePage()
+                        }
+                        .buttonStyle(.link)
+                        .font(.system(size: 12))
+                        
+                        Spacer()
+                        
+                        Button("Daha Sonra Hatırlat") {
+                            vm.updateManager.dismissUpdate(remindLater: true)
+                        }
+                        .buttonStyle(.link)
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 4)
+                }
+            }
+            .padding(24)
+            .frame(width: 460)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color(NSColor.windowBackgroundColor))
+                    .shadow(color: Color.black.opacity(0.28), radius: 25, y: 12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                    )
+            )
         }
     }
 }

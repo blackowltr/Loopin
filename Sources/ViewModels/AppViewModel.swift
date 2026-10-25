@@ -32,6 +32,7 @@ public final class AppViewModel: ObservableObject {
     public let clicker = AutoClicker.shared
     public let hotkeys = HotKeyManager.shared
     public let sound = SoundManager.shared
+    public let updateManager = UpdateManager.shared
     
     // Navigation
     @Published public var activeTab: AppTab = .autoClicker

@@ -36,6 +36,7 @@ SWIFT_SOURCES=(
     Sources/Services/MouseRecorder.swift
     Sources/Services/MacroPlayer.swift
     Sources/Services/AutoClicker.swift
+    Sources/Services/UpdateManager.swift
     Sources/ViewModels/AppViewModel.swift
     Sources/Views/IconBadge.swift
     Sources/Views/AutoClickerView.swift

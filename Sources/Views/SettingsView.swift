@@ -3,6 +3,7 @@ import AppKit
 
 public struct SettingsView: View {
     @ObservedObject var vm: AppViewModel
+    @ObservedObject private var updateManager = UpdateManager.shared
     
     public init(vm: AppViewModel) {
         self.vm = vm
@@ -19,6 +20,9 @@ public struct SettingsView: View {
                 
                 // Sound & Preferences Card
                 soundAndGeneralCard
+                
+                // Software Updates Card
+                updatesCard
                 
                 // Global Shortcuts Reference Card
                 shortcutsCard
@@ -232,6 +236,98 @@ public struct SettingsView: View {
                 .background(Color(NSColor.textBackgroundColor).opacity(0.6))
                 .cornerRadius(6)
         }
+    }
+    
+    // MARK: - Software Updates Card
+    private var updatesCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            CardHeader(
+                title: "Yazılım Güncellemeleri",
+                systemImage: "arrow.triangle.2.circlepath.circle.fill",
+                colors: [Color.blue, Color.cyan]
+            )
+            
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(vm.updateManager.updateAvailable ? Color.blue.opacity(0.15) : Color.green.opacity(0.12))
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: vm.updateManager.updateAvailable ? "arrow.down.circle.fill" : "checkmark.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(vm.updateManager.updateAvailable ? .blue : .green)
+                }
+                
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 8) {
+                        Text("Loopin v\(vm.updateManager.currentVersion)")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        
+                        Text("Build \(vm.updateManager.currentBuild)")
+                            .font(.caption2.weight(.medium))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.primary.opacity(0.06))
+                            .cornerRadius(4)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Text(vm.updateManager.statusMessage)
+                        .font(.subheadline)
+                        .foregroundColor(vm.updateManager.updateAvailable ? .blue : .secondary)
+                }
+                
+                Spacer()
+                
+                HStack(spacing: 10) {
+                    if vm.updateManager.updateAvailable {
+                        MacHeroButton(
+                            title: "Güncelle",
+                            systemImage: "arrow.down.circle",
+                            width: 120,
+                            height: 32
+                        ) {
+                            vm.updateManager.showUpdateModal = true
+                        }
+                    }
+                    
+                    MacSecondaryButton(
+                        title: vm.updateManager.isChecking ? "Denetleniyor..." : "Denetle",
+                        systemImage: "arrow.clockwise"
+                    ) {
+                        Task {
+                            await vm.updateManager.checkForUpdates(silent: false)
+                        }
+                    }
+                }
+            }
+            
+            Divider()
+                .opacity(0.5)
+            
+            // Auto-check preference toggle
+            Toggle(isOn: $updateManager.autoCheckEnabled) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Güncellemeleri Otomatik Denetle")
+                        .font(.system(size: 13, weight: .medium))
+                    Text("Uygulama arka planda çalışırken yeni sürümleri sessizce kontrol eder ve bildirir.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+            .controlSize(.small)
+        }
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(NSColor.controlBackgroundColor))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(vm.updateManager.updateAvailable ? Color.blue.opacity(0.3) : Color.primary.opacity(0.08), lineWidth: 1)
+                )
+        )
     }
     
     // MARK: - About Card
