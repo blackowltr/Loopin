@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loopin — Click less. Do more. | macOS Native Auto Clicker & Macro</title>
+  <meta name="description" content="Apple Silicon için tasarlanmış; sade, ultra hafif ve yerel macOS fare makro & oto-tıklayıcı uygulaması. Click less. Do more.">
+  <link rel="icon" type="image/png" href="Resources/AppIcon_1024.png">
+  
+  <style>
+    :root {
+      --bg-base: #080A0E;
+      --bg-card: rgba(18, 22, 30, 0.7);
+      --bg-card-hover: rgba(24, 30, 42, 0.85);
+      --border-card: rgba(255, 255, 255, 0.08);
+      --border-card-hover: rgba(56, 189, 248, 0.35);
+      --text-main: #F1F5F9;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+      --electric: #38BDF8;
+      --electric-deep: #0284C7;
+      --electric-glow: rgba(56, 189, 248, 0.22);
+      --silver: #E2E8F0;
+      --graphite: #0F1319;
+      --gradient-accent: linear-gradient(135deg, #38BDF8 0%, #2563EB 50%, #4F46E5 100%);
+      --gradient-glow: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(8, 10, 14, 0) 70%);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: "SF Mono", Menlo, Monaco, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Ambient Background Glow */
+    .ambient-glow {
+      position: fixed;
+      width: 700px;
+      height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(37, 99, 235, 0.06) 40%, rgba(8, 10, 14, 0) 70%);
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 0;
+      pointer-events: none;
+      filter: blur(40px);
+    }
+
+    .ambient-glow-bottom {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(79, 70, 229, 0.08) 0%, rgba(8, 10, 14, 0) 70%);
+      bottom: 200px;
+      right: 5%;
+      z-index: 0;
+      pointer-events: none;
+      filter: blur(50px);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Navigation */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(8, 10, 14, 0.75);
+      border-bottom: 1px solid var(--border-card);
+    }
+
+    .nav-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--gradient-accent);
+      box-shadow: 0 0 16px var(--electric-glow);
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.15s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--text-main);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Language Switcher */
+    .lang-toggle {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-full);
+      padding: 3px;
+      cursor: pointer;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .lang-btn.active {
+      background: var(--electric);
+      color: #041019;
+      box-shadow: 0 0 10px var(--electric-glow);
+    }
+
+    .btn-github {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-card);
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .btn-github:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 90px 0 60px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--electric);
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
+    }
+
+    .hero-badge .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--electric);
+      box-shadow: 0 0 8px var(--electric);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 6vw, 4.4rem);
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      line-height: 1.1;
+      margin-bottom: 18px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #CBD5E1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-title .accent {
+      background: linear-gradient(135deg, #38BDF8 0%, #60A5FA 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      color: var(--text-secondary);
+      max-width: 640px;
+      margin: 0 auto 32px;
+      font-weight: 400;
+    }
+
+    /* Rotating Slogan Pill */
+    .slogans-ticker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: var(--radius-full);
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      margin-bottom: 36px;
+    }
+
+    .slogans-ticker span.highlight {
+      color: var(--silver);
+      font-weight: 600;
+    }
+
+    /* CTA Buttons */
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 50px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 26px;
+      border-radius: var(--radius-md);
+      background: var(--gradient-accent);
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      box-shadow: 0 4px 20px var(--electric-glow), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 22px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-card);
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    /* macOS Interactive Window Mockup */
+    .app-preview-wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+      perspective: 1000px;
+    }
+
+    .macos-window {
+      background: rgba(15, 19, 27, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 40px rgba(56, 189, 248, 0.08);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      text-align: left;
+    }
+
+    .window-header {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .traffic-lights {
+      display: flex;
+      gap: 8px;
+      width: 100px;
+    }
+
+    .light {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .light-close { background: #FF5F56; border: 1px solid #E0443E; }
+    .light-min { background: #FFBD2E; border: 1px solid #DEA123; }
+    .light-max { background: #27C93F; border: 1px solid #1AAB29; }
+
+    .window-tabs {
+      display: flex;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .tab-btn {
+      padding: 5px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .window-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--electric);
+      background: rgba(56, 189, 248, 0.08);
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      width: 100px;
+      justify-content: flex-end;
+    }
+
+    .window-body {
+      padding: 24px;
+    }
+
+    /* Live Interactive Clicker Card in Window */
+    .interactive-card {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .stats-block h4 {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .stats-number {
+      font-size: 2.4rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: #fff;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .stats-cps-badge {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--electric);
+      background: rgba(56, 189, 248, 0.12);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-family: var(--font-sans);
+    }
+
+    .interactive-btn {
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+
+    .interactive-btn.start {
+      background: var(--gradient-accent);
+      box-shadow: 0 4px 14px var(--electric-glow);
+    }
+
+    .interactive-btn.stop {
+      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+    }
+
+    .interactive-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Preset Pills Row in Window */
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .mockup-pill {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .mockup-pill.active {
+      background: rgba(56, 189, 248, 0.1);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+
+    .mockup-pill .title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .mockup-pill.active .title {
+      color: var(--electric);
+    }
+
+    .mockup-pill .sub {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* Feature Bento Grid */
+    .section {
+      padding: 90px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto 50px;
+    }
+
+    .section-eyebrow {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--electric);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: clamp(2rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 14px;
+    }
+
+    .section-desc {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+    }
+
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .bento-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bento-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-card-hover);
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.5), 0 0 20px var(--electric-glow);
+    }
+
+    .bento-card.span-2 {
+      grid-column: span 2;
+    }
+
+    .bento-icon-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: 11px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--electric);
+      margin-bottom: 20px;
+    }
+
+    .bento-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .bento-desc {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
+    .bento-metric {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .bento-metric strong {
+      color: var(--silver);
+    }
+
+    /* Shortcuts Grid */
+    .shortcuts-section {
+      background: rgba(255, 255, 255, 0.015);
+      border-top: 1px solid var(--border-card);
+      border-bottom: 1px solid var(--border-card);
+    }
+
+    .shortcuts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .shortcut-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .shortcut-card:hover {
+      border-color: rgba(56, 189, 248, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .keycap {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+
+    .keycap.esc {
+      color: #F87171;
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .shortcut-desc {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .shortcut-detail {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* Comparison / Architecture Section */
+    .tech-specs-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .spec-item .num {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #fff;
+      font-family: var(--font-mono);
+      margin-bottom: 4px;
+      background: linear-gradient(135deg, #38BDF8 0%, #FFFFFF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .spec-item .label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Slogan Quotes Banner */
+    .slogans-banner {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin: 60px 0 0;
+    }
+
+    .slogan-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-md);
+      padding: 20px 16px;
+      text-align: center;
+    }
+
+    .slogan-card p {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--silver);
+    }
+
+    /* Download Banner */
+    .download-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: var(--radius-lg);
+      padding: 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 50px var(--electric-glow);
+    }
+
+    .download-card h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+
+    .download-card p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      max-width: 500px;
+      margin: 0 auto 28px;
+    }
+
+    .cli-box {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-sm);
+      padding: 10px 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--silver);
+      margin-top: 20px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .cli-box:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #fff;
+    }
+
+    /* Footer */
+    footer {
+      padding: 60px 0 30px;
+      border-top: 1px solid var(--border-card);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .footer-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+      list-style: none;
+    }
+
+    .footer-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--text-main);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .bento-grid {
+        grid-template-columns: 1fr;
+      }
+      .bento-card.span-2 {
+        grid-column: span 1;
+      }
+      .tech-specs-card, .slogans-banner {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .interactive-card {
+        flex-direction: column;
+        text-align: center;
+      }
+      .mockup-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .nav-links {
+        display: none;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .tech-specs-card, .slogans-banner {
+        grid-template-columns: 1fr;
+      }
+      .hero {
+        padding: 60px 0 40px;
+      }
+      .download-card {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Glow -->
+  <div class="ambient-glow"></div>
+  <div class="ambient-glow-bottom"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-wrapper">
+      <a href="#" class="brand">
+        <div class="brand-icon">
+          <!-- Custom Loopin Single-Stroke Infinity Loop Icon -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 12c-2.5-3.5-5.5-5-8.5-2.5S1.5 16 5 17.5s6.5-1.5 7-5.5c.5-4 3.5-7 7-5.5s4.5 6 1.5 8s-6 1-8.5-3z"/>
+          </svg>
+        </div>
+        <span class="brand-title">Loopin</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#features" data-i18n="nav.features">Özellikler</a></li>
+        <li><a href="#shortcuts" data-i18n="nav.shortcuts">Kısayollar</a></li>
+        <li><a href="#specs" data-i18n="nav.specs">Performans</a></li>
+        <li><a href="#download" data-i18n="nav.download">İndir</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <!-- Language Switcher -->
+        <div class="lang-toggle" onclick="toggleLanguage()" title="Dili Değiştir / Switch Language">
+          <button type="button" class="lang-btn active" id="btn-tr">TR</button>
+          <button type="button" class="lang-btn" id="btn-en">EN</button>
+        </div>
+
+        <a href="https://github.com/blackowltr/Loopin" target="_blank" class="btn-github">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main>
+    <section class="hero">
+      <div class="container">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          <span data-i18n="hero.badge">Apple Silicon (M1-M5) & macOS Sequoia Yerel</span>
+        </div>
+
+        <h1 class="hero-title">
+          <span data-i18n="hero.title.lead">Click less.</span>
+          <span class="accent" data-i18n="hero.title.accent">Do more.</span>
+        </h1>
+
+        <p class="hero-subtitle" data-i18n="hero.subtitle">
+          macOS için tasarlanmış; sade, hafif ve sıfır gecikmeli fare makro ve oto-tıklayıcı uygulaması. Eylemlerinizi döngüye alın, küçük işleri otomatiğe bağlayın.
+        </p>
+
+        <!-- Dynamic Brand Slogan Pill -->
+        <div class="slogans-ticker">
+          <span data-i18n="hero.tagline_prefix">Felsefemiz:</span>
+          <span class="highlight" id="ticker-text">Your actions, on repeat.</span>
+        </div>
+
+        <div class="hero-actions">
+          <a href="https://github.com/blackowltr/Loopin/releases" class="btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span data-i18n="hero.btn.download">Loopin'i İndir (v1.0.0)</span>
+          </a>
+
+          <a href="https://github.com/blackowltr/Loopin" target="_blank" class="btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            <span data-i18n="hero.btn.star">Kaynak Kodu İncele</span>
+          </a>
+        </div>
+
+        <!-- Interactive macOS Window Mockup -->
+        <div class="app-preview-wrapper">
+          <div class="macos-window">
+            <div class="window-header">
+              <div class="traffic-lights">
+                <div class="light light-close"></div>
+                <div class="light light-min"></div>
+                <div class="light light-max"></div>
+              </div>
+
+              <div class="window-tabs">
+                <button class="tab-btn active" id="tab-clicker">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  <span data-i18n="mockup.tab.clicker">Oto Tıklayıcı</span>
+                </button>
+                <button class="tab-btn" id="tab-recorder">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+                  <span data-i18n="mockup.tab.recorder">Makro Kaydedici</span>
+                </button>
+                <button class="tab-btn" id="tab-inspector">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+                  <span data-i18n="mockup.tab.inspector">Koordinat & Hedef</span>
+                </button>
+              </div>
+
+              <div class="window-status">
+                <span class="dot"></span>
+                <span id="window-status-text" data-i18n="mockup.status.idle">Beklemede</span>
+              </div>
+            </div>
+
+            <div class="window-body">
+              <!-- Live Interactive Card -->
+              <div class="interactive-card">
+                <div class="stats-block">
+                  <h4 data-i18n="mockup.clicks_done">TAMAMLANAN TIKLAMA</h4>
+                  <div class="stats-number">
+                    <span id="click-counter">1,420</span>
+                    <span class="stats-cps-badge" id="cps-badge">100.0 CPS</span>
+                  </div>
+                </div>
+
+                <button class="interactive-btn start" id="interactive-toggle-btn" onclick="toggleSimulatedClicker()">
+                  <svg id="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                  <span id="btn-text" data-i18n="mockup.btn.start">BAŞLAT</span>
+                </button>
+              </div>
+
+              <!-- Preset Row -->
+              <div class="mockup-grid">
+                <div class="mockup-pill active" onclick="selectPreset(10, '100.0 CPS', this)">
+                  <div class="title">100 CPS</div>
+                  <div class="sub">10 ms</div>
+                </div>
+                <div class="mockup-pill" onclick="selectPreset(50, '20.0 CPS', this)">
+                  <div class="title">20 CPS</div>
+                  <div class="sub">50 ms</div>
+                </div>
+                <div class="mockup-pill" onclick="selectPreset(100, '10.0 CPS', this)">
+                  <div class="title">10 CPS</div>
+                  <div class="sub">100 ms</div>
+                </div>
+                <div class="mockup-pill" onclick="selectPreset(1000, '1.0 CPS', this)">
+                  <div class="title">1 CPS</div>
+                  <div class="sub">1000 ms</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Alternative Slogans Brand Showcase -->
+    <section class="container">
+      <div class="slogans-banner">
+        <div class="slogan-card">
+          <p>“Your actions, on repeat.”</p>
+        </div>
+        <div class="slogan-card">
+          <p>“Make every click count.”</p>
+        </div>
+        <div class="slogan-card">
+          <p>“Automate the little things.”</p>
+        </div>
+        <div class="slogan-card">
+          <p>“Repeat. Refine. Relax.”</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Bento Grid -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow" data-i18n="features.eyebrow">MÜKEMMELLİKLE GELİŞTİRİLDİ</div>
+          <h2 class="section-title" data-i18n="features.title">Küçük İşleri Otomatiğe Alın</h2>
+          <p class="section-desc" data-i18n="features.desc">
+            Loopin, donma ve gecikme olmaksızın en yüksek hızda fare otomasyonu sunarken sistem kaynaklarını minimumda tutar.
+          </p>
+        </div>
+
+        <div class="bento-grid">
+          <!-- Card 1 -->
+          <div class="bento-card span-2">
+            <div class="bento-icon-wrap">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <h3 class="bento-title" data-i18n="feat1.title">Ultra Hızlı & Hassas Oto Tıklayıcı</h3>
+            <p class="bento-desc" data-i18n="feat1.desc">
+              1 CPS'den 100+ CPS'ye kadar mikrosaniye hassasiyetinde tıklama döngüleri. Sol, sağ, orta tuş; tek, çift, üçlü veya basılı tutma modları ve insan taklidi yapan mikroskobik titreşim (Jitter) filtresi.
+            </p>
+            <div class="bento-metric">
+              <span data-i18n="feat1.m1">Tıklama Frekansı:</span>
+              <strong>1 - 100+ CPS (2 ms)</strong>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="bento-card">
+            <div class="bento-icon-wrap">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+            </div>
+            <h3 class="bento-title" data-i18n="feat2.title">Canlı Makro Kaydedici</h3>
+            <p class="bento-desc" data-i18n="feat2.desc">
+              Tüm fare tıklamalarını, kaydırmalarını ve hareketlerini zaman çizelgesiyle canlı kaydedin; 0.5x'ten 10x'e kadar hızlandırıp sonsuz döngüde oynatın.
+            </p>
+            <div class="bento-metric">
+              <span data-i18n="feat2.m1">Oynatma Hızı:</span>
+              <strong>0.5x – 10.0x</strong>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="bento-card">
+            <div class="bento-icon-wrap">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3 class="bento-title" data-i18n="feat3.title">Fail-Safe Köşe Kilidi</h3>
+            <p class="bento-desc" data-i18n="feat3.desc">
+              Otomasyon sırasında imlecinizi ekranın herhangi bir köşesine çekerek veya klavyedeki ESC tuşuna basarak işlemi anında iptal edebilirsiniz.
+            </p>
+            <div class="bento-metric">
+              <span data-i18n="feat3.m1">Acil Durdurma:</span>
+              <strong>ESC & Köşe Kilidi</strong>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="bento-card">
+            <div class="bento-icon-wrap">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <h3 class="bento-title" data-i18n="feat4.title">Koordinat Bulucu (Inspector)</h3>
+            <p class="bento-desc" data-i18n="feat4.desc">
+              İmlecin piksel koordinatlarını canlı izleyin, ⌥X kısayolu ile tek hamlede panoya kopyalayın veya tek tıkla oto-tıklayıcı hedefi yapın.
+            </p>
+            <div class="bento-metric">
+              <span data-i18n="feat4.m1">Hızlı Kısayol:</span>
+              <strong>⌥ X</strong>
+            </div>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="bento-card">
+            <div class="bento-icon-wrap">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <h3 class="bento-title" data-i18n="feat5.title">Menü Çubuğu Entegrasyonu</h3>
+            <p class="bento-desc" data-i18n="feat5.desc">
+              Pencereyi kapatın; Loopin macOS Menü Çubuğunuzda (Menu Bar) arka planda sessizce bekler. Tek tıkla arka planda makrolarınızı yürütün.
+            </p>
+            <div class="bento-metric">
+              <span data-i18n="feat5.m1">Sistem Yükü:</span>
+              <strong>%0 Idle CPU</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Global Shortcuts Section -->
+    <section class="section shortcuts-section" id="shortcuts">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow" data-i18n="shortcuts.eyebrow">KÜRESEL KISAYOLLAR</div>
+          <h2 class="section-title" data-i18n="shortcuts.title">Parmaklarınızın Ucunda Kontrol</h2>
+          <p class="section-desc" data-i18n="shortcuts.desc">
+            Uygulama arka plandayken veya tam ekran oyundayken bile çalışan evrensel kısayol tuşları.
+          </p>
+        </div>
+
+        <div class="shortcuts-grid">
+          <div class="shortcut-card">
+            <div class="keycap">⌥ C</div>
+            <div>
+              <div class="shortcut-desc" data-i18n="sc1.title">Oto Tıklayıcıyı Başlat / Durdur</div>
+              <div class="shortcut-detail" data-i18n="sc1.desc">Arka planda oto tıklayıcıyı anında tetikler</div>
+            </div>
+          </div>
+
+          <div class="shortcut-card">
+            <div class="keycap">⌥ R</div>
+            <div>
+              <div class="shortcut-desc" data-i18n="sc2.title">Makro Kaydet / Bitir</div>
+              <div class="shortcut-detail" data-i18n="sc2.desc">Tüm fare eylemlerini kaydetmeye başlar</div>
+            </div>
+          </div>
+
+          <div class="shortcut-card">
+            <div class="keycap">⌥ P</div>
+            <div>
+              <div class="shortcut-desc" data-i18n="sc3.title">Makroyu Oynat / Durdur</div>
+              <div class="shortcut-detail" data-i18n="sc3.desc">Seçili makro dizisini hemen yürütür</div>
+            </div>
+          </div>
+
+          <div class="shortcut-card">
+            <div class="keycap">⌥ X</div>
+            <div>
+              <div class="shortcut-desc" data-i18n="sc4.title">Koordinatı Kopyala</div>
+              <div class="shortcut-detail" data-i18n="sc4.desc">İmlecin bulunduğu X,Y noktasını panoya alır</div>
+            </div>
+          </div>
+
+          <div class="shortcut-card">
+            <div class="keycap esc">ESC</div>
+            <div>
+              <div class="shortcut-desc" data-i18n="sc5.title">Acil Durdurma</div>
+              <div class="shortcut-detail" data-i18n="sc5.desc">Çalışan tüm otomasyonları anında keser</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tech Specs & Performance Section -->
+    <section class="section" id="specs">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow" data-i18n="specs.eyebrow">APPLE SILICON YEREL</div>
+          <h2 class="section-title" data-i18n="specs.title">Sıfır Hantallık. Saf Swift.</h2>
+          <p class="section-desc" data-i18n="specs.desc">
+            Electron, Node.js veya web paketleri yok. Yalnızca modern Apple Swift 6, CoreGraphics ve SwiftUI.
+          </p>
+        </div>
+
+        <div class="tech-specs-card">
+          <div class="spec-item">
+            <div class="num">&lt; 15 MB</div>
+            <div class="label" data-i18n="spec1.label">Ultra Hafif Bellek İzi</div>
+          </div>
+          <div class="spec-item">
+            <div class="num">0.0 %</div>
+            <div class="label" data-i18n="spec2.label">Boşta (Idle) CPU Tüketimi</div>
+          </div>
+          <div class="spec-item">
+            <div class="num">ARM64</div>
+            <div class="label" data-i18n="spec3.label">M1 / M2 / M3 / M4 / M5 Yerel</div>
+          </div>
+          <div class="spec-item">
+            <div class="num">2 ms</div>
+            <div class="label" data-i18n="spec4.label">Minimum Tıklama Gecikmesi</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Download / Call to Action -->
+    <section class="section" id="download">
+      <div class="container">
+        <div class="download-card">
+          <h2 data-i18n="cta.title">Daha Az Tıklayın. Daha Çok Üretin.</h2>
+          <p data-i18n="cta.desc">
+            Loopin'i hemen indirin veya kaynak koddan derleyerek dakikalar içinde kullanmaya başlayın.
+          </p>
+
+          <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+            <a href="https://github.com/blackowltr/Loopin/releases" class="btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span data-i18n="cta.btn.dmg">Loopin.app İndir (macOS 14+)</span>
+            </a>
+
+            <a href="https://github.com/blackowltr/Loopin" target="_blank" class="btn-secondary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+              </svg>
+              <span>GitHub Repository</span>
+            </a>
+          </div>
+
+          <br>
+          <div class="cli-box" onclick="copyCliCommand(this)" title="Komutu Kopyala">
+            <code>git clone https://github.com/blackowltr/Loopin.git && cd Loopin && ./build.sh</code>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-wrapper">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="brand-icon" style="width: 24px; height: 24px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5"><path d="M12 12c-2.5-3.5-5.5-5-8.5-2.5S1.5 16 5 17.5s6.5-1.5 7-5.5c.5-4 3.5-7 7-5.5s4.5 6 1.5 8s-6 1-8.5-3z"/></svg>
+        </div>
+        <span>Loopin © 2026. Made with precision for Apple Silicon.</span>
+      </div>
+
+      <ul class="footer-links">
+        <li><a href="https://github.com/blackowltr/Loopin" target="_blank">GitHub</a></li>
+        <li><a href="https://github.com/blackowltr/Loopin/blob/main/LICENSE" target="_blank">MIT License</a></li>
+        <li><a href="https://github.com/blackowltr" target="_blank">BlackOwl</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <!-- Scripts: Interactive Mockup & Internationalization (TR/EN) -->
+  <script>
+    const i18nData = {
+      tr: {
+        "nav.features": "Özellikler",
+        "nav.shortcuts": "Kısayollar",
+        "nav.specs": "Performans",
+        "nav.download": "İndir",
+        "hero.badge": "Apple Silicon (M1-M5) & macOS Sequoia Yerel",
+        "hero.title.lead": "Daha az tıkla.",
+        "hero.title.accent": "Daha çok üret.",
+        "hero.subtitle": "macOS için tasarlanmış; sade, hafif ve sıfır gecikmeli fare makro ve oto-tıklayıcı uygulaması. Eylemlerinizi döngüye alın, küçük işleri otomatiğe bağlayın.",
+        "hero.tagline_prefix": "Felsefemiz:",
+        "hero.btn.download": "Loopin'i İndir (v1.0.0)",
+        "hero.btn.star": "Kaynak Kodu İncele",
+        "mockup.tab.clicker": "Oto Tıklayıcı",
+        "mockup.tab.recorder": "Makro Kaydedici",
+        "mockup.tab.inspector": "Koordinat & Hedef",
+        "mockup.status.idle": "Beklemede",
+        "mockup.status.active": "Tıklanıyor...",
+        "mockup.clicks_done": "TAMAMLANAN TIKLAMA",
+        "mockup.btn.start": "BAŞLAT",
+        "mockup.btn.stop": "DURDUR",
+        "features.eyebrow": "MÜKEMMELLİKLE GELİŞTİRİLDİ",
+        "features.title": "Küçük İşleri Otomatiğe Alın",
+        "features.desc": "Loopin, donma ve gecikme olmaksızın en yüksek hızda fare otomasyonu sunarken sistem kaynaklarını minimumda tutar.",
+        "feat1.title": "Ultra Hızlı & Hassas Oto Tıklayıcı",
+        "feat1.desc": "1 CPS'den 100+ CPS'ye kadar mikrosaniye hassasiyetinde tıklama döngüleri. Sol, sağ, orta tuş; tek, çift, üçlü veya basılı tutma modları ve insan taklidi yapan mikroskobik titreşim (Jitter) filtresi.",
+        "feat1.m1": "Tıklama Frekansı:",
+        "feat2.title": "Canlı Makro Kaydedici",
+        "feat2.desc": "Tüm fare tıklamalarını, kaydırmalarını ve hareketlerini zaman çizelgesiyle canlı kaydedin; 0.5x'ten 10x'e kadar hızlandırıp sonsuz döngüde oynatın.",
+        "feat2.m1": "Oynatma Hızı:",
+        "feat3.title": "Fail-Safe Köşe Kilidi",
+        "feat3.desc": "Otomasyon sırasında imlecinizi ekranın herhangi bir köşesine çekerek veya klavyedeki ESC tuşuna basarak işlemi anında iptal edebilirsiniz.",
+        "feat3.m1": "Acil Durdurma:",
+        "feat4.title": "Koordinat Bulucu (Inspector)",
+        "feat4.desc": "İmlecin piksel koordinatlarını canlı izleyin, ⌥X kısayolu ile tek hamlede panoya kopyalayın veya tek tıkla oto-tıklayıcı hedefi yapın.",
+        "feat4.m1": "Hızlı Kısayol:",
+        "feat5.title": "Menü Çubuğu Entegrasyonu",
+        "feat5.desc": "Pencereyi kapatın; Loopin macOS Menü Çubuğunuzda (Menu Bar) arka planda sessizce bekler. Tek tıkla arka planda makrolarınızı yürütün.",
+        "feat5.m1": "Sistem Yükü:",
+        "shortcuts.eyebrow": "KÜRESEL KISAYOLLAR",
+        "shortcuts.title": "Parmaklarınızın Ucunda Kontrol",
+        "shortcuts.desc": "Uygulama arka plandayken veya tam ekran oyundayken bile çalışan evrensel kısayol tuşları.",
+        "sc1.title": "Oto Tıklayıcıyı Başlat / Durdur",
+        "sc1.desc": "Arka planda oto tıklayıcıyı anında tetikler",
+        "sc2.title": "Makro Kaydet / Bitir",
+        "sc2.desc": "Tüm fare eylemlerini kaydetmeye başlar",
+        "sc3.title": "Makroyu Oynat / Durdur",
+        "sc3.desc": "Seçili makro dizisini hemen yürütür",
+        "sc4.title": "Koordinatı Kopyala",
+        "sc4.desc": "İmlecin bulunduğu X,Y noktasını panoya alır",
+        "sc5.title": "Acil Durdurma",
+        "sc5.desc": "Çalışan tüm otomasyonları anında keser",
+        "specs.eyebrow": "APPLE SILICON YEREL",
+        "specs.title": "Sıfır Hantallık. Saf Swift.",
+        "specs.desc": "Electron, Node.js veya web paketleri yok. Yalnızca modern Apple Swift 6, CoreGraphics ve SwiftUI.",
+        "spec1.label": "Ultra Hafif Bellek İzi",
+        "spec2.label": "Boşta (Idle) CPU Tüketimi",
+        "spec3.label": "M1 / M2 / M3 / M4 / M5 Yerel",
+        "spec4.label": "Minimum Tıklama Gecikmesi",
+        "cta.title": "Daha Az Tıklayın. Daha Çok Üretin.",
+        "cta.desc": "Loopin'i hemen indirin veya kaynak koddan derleyerek dakikalar içinde kullanmaya başlayın.",
+        "cta.btn.dmg": "Loopin.app İndir (macOS 14+)"
+      },
+      en: {
+        "nav.features": "Features",
+        "nav.shortcuts": "Shortcuts",
+        "nav.specs": "Performance",
+        "nav.download": "Download",
+        "hero.badge": "Apple Silicon (M1-M5) & macOS Sequoia Native",
+        "hero.title.lead": "Click less.",
+        "hero.title.accent": "Do more.",
+        "hero.subtitle": "A minimalist, lightweight, and zero-latency mouse macro & auto clicker built natively for macOS. Put your actions on repeat, automate the little things.",
+        "hero.tagline_prefix": "Philosophy:",
+        "hero.btn.download": "Download Loopin (v1.0.0)",
+        "hero.btn.star": "View Source Code",
+        "mockup.tab.clicker": "Auto Clicker",
+        "mockup.tab.recorder": "Macro Recorder",
+        "mockup.tab.inspector": "Coordinates & Target",
+        "mockup.status.idle": "Idle",
+        "mockup.status.active": "Clicking...",
+        "mockup.clicks_done": "CLICKS COMPLETED",
+        "mockup.btn.start": "START",
+        "mockup.btn.stop": "STOP",
+        "features.eyebrow": "CRAFTED WITH PRECISION",
+        "features.title": "Automate the Little Things",
+        "features.desc": "Loopin delivers high-frequency mouse automation with zero lag or frame drops, consuming virtually zero system resources.",
+        "feat1.title": "Ultra-Fast & Precision Auto Clicker",
+        "feat1.desc": "From 1 CPS to 100+ CPS with microsecond timing. Left, right, middle buttons; single, double, triple or hold modes with organic anti-detection jitter.",
+        "feat1.m1": "Click Frequency:",
+        "feat2.title": "Live Macro Recorder & Player",
+        "feat2.desc": "Capture mouse clicks, scrolls, and movements live with a step-by-step visual timeline. Replay from 0.5x up to 10x speed with infinite loop support.",
+        "feat2.m1": "Playback Speed:",
+        "feat3.title": "Fail-Safe Corner Abort",
+        "feat3.desc": "Instantly cancel any active automation by moving your mouse cursor to any screen corner or pressing the ESC key. Never lose control.",
+        "feat3.m1": "Emergency Kill Switch:",
+        "feat4.title": "Live Coordinate Inspector",
+        "feat4.desc": "Inspect mouse coordinates in real time, copy them with ⌥X in a split second, or assign them as the fixed target for the auto clicker.",
+        "feat4.m1": "Quick Shortcut:",
+        "feat5.title": "macOS Menu Bar Extra",
+        "feat5.desc": "Close the window; Loopin rests quietly in your macOS Menu Bar. Trigger automations in the background with zero desktop distraction.",
+        "feat5.m1": "System Overhead:",
+        "shortcuts.eyebrow": "GLOBAL HOTKEYS",
+        "shortcuts.title": "Control at Your Fingertips",
+        "shortcuts.desc": "Universal global hotkeys that work everywhere, even while in full-screen games or other apps.",
+        "sc1.title": "Start / Stop Auto Clicker",
+        "sc1.desc": "Instantly toggle rapid auto-clicking in the background",
+        "sc2.title": "Start / Stop Macro Record",
+        "sc2.desc": "Begin capturing all mouse events in real time",
+        "sc3.title": "Play / Stop Macro",
+        "sc3.desc": "Immediately execute the active macro sequence",
+        "sc4.title": "Copy Coordinates",
+        "sc4.desc": "Copies current cursor X,Y coordinates to clipboard",
+        "sc5.title": "Emergency Stop",
+        "sc5.desc": "Aborts all active loops and automations immediately",
+        "specs.eyebrow": "APPLE SILICON NATIVE",
+        "specs.title": "Zero Bloat. Pure Swift.",
+        "specs.desc": "No Electron. No Node.js. No web wrappers. Built 100% natively using Swift 6, CoreGraphics and SwiftUI.",
+        "spec1.label": "Ultra-Lightweight Memory Footprint",
+        "spec2.label": "Idle CPU Consumption",
+        "spec3.label": "M1 / M2 / M3 / M4 / M5 Native",
+        "spec4.label": "Minimum Click Latency",
+        "cta.title": "Click Less. Do More.",
+        "cta.desc": "Download Loopin today or build from source in seconds.",
+        "cta.btn.dmg": "Download Loopin.app (macOS 14+)"
+      }
+    };
+
+    let currentLang = 'tr';
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      
+      document.getElementById('btn-tr').classList.toggle('active', lang === 'tr');
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (i18nData[lang] && i18nData[lang][key]) {
+          el.innerText = i18nData[lang][key];
+        }
+      });
+      
+      // Update interactive button text if not active
+      if (!isSimulating) {
+        document.getElementById('btn-text').innerText = i18nData[lang]['mockup.btn.start'];
+        document.getElementById('window-status-text').innerText = i18nData[lang]['mockup.status.idle'];
+      } else {
+        document.getElementById('btn-text').innerText = i18nData[lang]['mockup.btn.stop'];
+        document.getElementById('window-status-text').innerText = i18nData[lang]['mockup.status.active'];
+      }
+      
+      localStorage.setItem('loopin_lang', lang);
+    }
+
+    function toggleLanguage() {
+      setLanguage(currentLang === 'tr' ? 'en' : 'tr');
+    }
+
+    // Rotating Tagline Ticker
+    const slogans = [
+      "Your actions, on repeat.",
+      "Make every click count.",
+      "Automate the little things.",
+      "Repeat. Refine. Relax."
+    ];
+    let sloganIdx = 0;
+    setInterval(() => {
+      sloganIdx = (sloganIdx + 1) % slogans.length;
+      const el = document.getElementById('ticker-text');
+      if (el) {
+        el.style.opacity = '0';
+        setTimeout(() => {
+          el.innerText = slogans[sloganIdx];
+          el.style.opacity = '1';
+        }, 200);
+      }
+    }, 3200);
+
+    // Interactive Clicker Simulation
+    let isSimulating = false;
+    let clickCount = 1420;
+    let simulationTimer = null;
+    let currentInterval = 10;
+    let currentCPSLabel = '100.0 CPS';
+
+    function toggleSimulatedClicker() {
+      isSimulating = !isSimulating;
+      const btn = document.getElementById('interactive-toggle-btn');
+      const btnText = document.getElementById('btn-text');
+      const statusText = document.getElementById('window-status-text');
+      
+      if (isSimulating) {
+        btn.classList.remove('start');
+        btn.classList.add('stop');
+        btnText.innerText = i18nData[currentLang]['mockup.btn.stop'];
+        statusText.innerText = i18nData[currentLang]['mockup.status.active'];
+        
+        simulationTimer = setInterval(() => {
+          clickCount += Math.max(1, Math.round(100 / (currentInterval)));
+          document.getElementById('click-counter').innerText = clickCount.toLocaleString();
+        }, 100);
+      } else {
+        btn.classList.remove('stop');
+        btn.classList.add('start');
+        btnText.innerText = i18nData[currentLang]['mockup.btn.start'];
+        statusText.innerText = i18nData[currentLang]['mockup.status.idle'];
+        clearInterval(simulationTimer);
+      }
+    }
+
+    function selectPreset(ms, cps, el) {
+      currentInterval = ms;
+      currentCPSLabel = cps;
+      document.querySelectorAll('.mockup-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('cps-badge').innerText = cps;
+    }
+
+    function copyCliCommand(el) {
+      const code = el.querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const orig = el.innerHTML;
+        el.innerHTML = '<span style="color:#38BDF8; font-weight:600;">✓ Kopyalandı / Copied to clipboard!</span>';
+        setTimeout(() => {
+          el.innerHTML = orig;
+        }, 2000);
+      });
+    }
+
+    // Init from user preference
+    const saved = localStorage.getItem('loopin_lang') || (navigator.language.startsWith('tr') ? 'tr' : 'en');
+    setLanguage(saved);
+  </script>
+</body>
+</html>
